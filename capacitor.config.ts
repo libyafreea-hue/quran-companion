@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.57f6f173fbe241de95eff8969da5bbc6',
+  appId: 'com.khatma.quran',
   appName: 'ختمة القرآن الكريم',
   webDir: 'dist',
   server: {
