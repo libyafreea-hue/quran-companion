@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.khatma.quran',
   appName: 'ختمة القرآن الكريم',
   webDir: 'dist',
-  server: {
-    url: 'https://57f6f173-fbe2-41de-95ef-f8969da5bbc6.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2500,
