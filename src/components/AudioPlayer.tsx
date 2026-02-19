@@ -9,13 +9,14 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [audioUrls, setAudioUrls] = useState<string[]>([]);
-  const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const indexRef = useRef(0);
+  const audioUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     // Reset on surah change
     setIsPlaying(false);
-    setCurrentAyahIndex(0);
+    indexRef.current = 0;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -26,41 +27,48 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
       .then((res) => res.json())
       .then((json) => {
         if (json.code === 200) {
-          setAudioUrls(json.data.ayahs.map((a: any) => a.audio));
+          const urls = json.data.ayahs.map((a: any) => a.audio);
+          setAudioUrls(urls);
+          audioUrlsRef.current = urls;
         }
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
   }, [surahNumber]);
 
+  const playNextAyah = (index: number) => {
+    const urls = audioUrlsRef.current;
+    if (index >= urls.length) {
+      setIsPlaying(false);
+      indexRef.current = 0;
+      return;
+    }
+
+    const audio = new Audio(urls[index]);
+    audioRef.current = audio;
+    indexRef.current = index;
+
+    audio.onended = () => {
+      playNextAyah(index + 1);
+    };
+
+    audio.play().catch(() => {
+      setIsPlaying(false);
+    });
+  };
+
   const playAudio = () => {
-    if (audioUrls.length === 0) return;
+    if (audioUrlsRef.current.length === 0) return;
 
     if (audioRef.current && isPlaying) {
       audioRef.current.pause();
+      audioRef.current = null;
       setIsPlaying(false);
       return;
     }
 
-    const audio = new Audio(audioUrls[currentAyahIndex]);
-    audioRef.current = audio;
-
-    audio.onended = () => {
-      const nextIndex = currentAyahIndex + 1;
-      if (nextIndex < audioUrls.length) {
-        setCurrentAyahIndex(nextIndex);
-        const nextAudio = new Audio(audioUrls[nextIndex]);
-        audioRef.current = nextAudio;
-        nextAudio.onended = audio.onended;
-        nextAudio.play();
-      } else {
-        setIsPlaying(false);
-        setCurrentAyahIndex(0);
-      }
-    };
-
-    audio.play();
     setIsPlaying(true);
+    playNextAyah(indexRef.current);
   };
 
   const stopAudio = () => {
@@ -69,14 +77,14 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
       audioRef.current = null;
     }
     setIsPlaying(false);
-    setCurrentAyahIndex(0);
+    indexRef.current = 0;
   };
 
   return (
     <div className="flex items-center gap-2">
       <button
         onClick={isPlaying ? stopAudio : playAudio}
-        disabled={isLoading || audioUrls.length === 0}
+        disabled={isLoading || audioUrlsRef.current.length === 0}
         className="flex items-center gap-2 px-4 py-2 rounded-full gradient-islamic text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shadow-islamic"
       >
         {isLoading ? (
