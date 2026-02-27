@@ -103,7 +103,7 @@ const PrivacyPolicy = () => {
                 إذا كان لديكم أي أسئلة أو استفسارات حول سياسة الخصوصية، يمكنكم التواصل معنا عبر البريد الإلكتروني:
               </p>
               <p className="mt-2 text-primary font-bold" dir="ltr">
-                contact@khatma-quran.app
+                libyafreea@gmail.com
               </p>
             </section>
           </div>
