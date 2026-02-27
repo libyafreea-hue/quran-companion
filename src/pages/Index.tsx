@@ -54,10 +54,13 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="text-center py-6 border-t border-border">
+      <footer className="text-center py-6 border-t border-border space-y-2">
         <p className="text-sm text-muted-foreground font-amiri">
           ﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾
         </p>
+        <a href="/privacy" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+          سياسة الخصوصية
+        </a>
       </footer>
     </div>
   );
