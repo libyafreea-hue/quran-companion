@@ -58,9 +58,6 @@ const Index = () => {
         <p className="text-sm text-muted-foreground font-amiri">
           ﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾
         </p>
-        <a href="/privacy" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-          سياسة الخصوصية
-        </a>
       </footer>
     </div>
   );
