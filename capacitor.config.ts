@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.quran.khatma',
+  appId: 'com.quran.khatmaapp',
   appName: 'ختمة القرآن الكريم',
   webDir: 'dist',
   plugins: {
