@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Volume2, VolumeX, Play, Pause, Loader2 } from "lucide-react";
+import { createAudioController, AudioController } from "@/lib/audioPlayer";
 
 interface AudioPlayerProps {
   surahNumber: number;
@@ -8,83 +9,68 @@ interface AudioPlayerProps {
 const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [audioUrls, setAudioUrls] = useState<string[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const indexRef = useRef(0);
-  const audioUrlsRef = useRef<string[]>([]);
+  const [audioReady, setAudioReady] = useState(false);
+  const controllerRef = useRef<AudioController | null>(null);
+  const urlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     // Reset on surah change
     setIsPlaying(false);
-    indexRef.current = 0;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    setAudioReady(false);
+    controllerRef.current?.stop();
+    controllerRef.current = null;
 
     setIsLoading(true);
     fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.alafasy`)
       .then((res) => res.json())
       .then((json) => {
         if (json.code === 200) {
-          const urls = json.data.ayahs.map((a: any) => a.audio);
-          setAudioUrls(urls);
-          audioUrlsRef.current = urls;
+          urlsRef.current = json.data.ayahs.map((a: any) => a.audio);
+          setAudioReady(true);
         }
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
+
+    return () => {
+      controllerRef.current?.stop();
+      controllerRef.current = null;
+    };
   }, [surahNumber]);
 
-  const playNextAyah = (index: number) => {
-    const urls = audioUrlsRef.current;
-    if (index >= urls.length) {
-      setIsPlaying(false);
-      indexRef.current = 0;
-      return;
-    }
+  const playAudio = async () => {
+    if (urlsRef.current.length === 0) return;
 
-    const audio = new Audio(urls[index]);
-    audioRef.current = audio;
-    indexRef.current = index;
-
-    audio.onended = () => {
-      playNextAyah(index + 1);
-    };
-
-    audio.play().catch(() => {
-      setIsPlaying(false);
-    });
-  };
-
-  const playAudio = () => {
-    if (audioUrlsRef.current.length === 0) return;
-
-    if (audioRef.current && isPlaying) {
-      audioRef.current.pause();
-      audioRef.current = null;
+    if (controllerRef.current && isPlaying) {
+      controllerRef.current.stop();
+      controllerRef.current = null;
       setIsPlaying(false);
       return;
     }
 
     setIsPlaying(true);
-    playNextAyah(indexRef.current);
+    const controller = await createAudioController(
+      urlsRef.current,
+      () => {
+        setIsPlaying(false);
+        controllerRef.current = null;
+      }
+    );
+    controllerRef.current = controller;
+    await controller.play();
   };
 
   const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    controllerRef.current?.stop();
+    controllerRef.current = null;
     setIsPlaying(false);
-    indexRef.current = 0;
   };
 
   return (
     <div className="flex items-center gap-2">
       <button
         onClick={isPlaying ? stopAudio : playAudio}
-        disabled={isLoading || audioUrlsRef.current.length === 0}
+        disabled={isLoading || !audioReady}
         className="flex items-center gap-2 px-4 py-2 rounded-full gradient-islamic text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shadow-islamic"
       >
         {isLoading ? (
