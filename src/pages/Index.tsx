@@ -3,8 +3,12 @@ import SurahDisplay from "@/components/SurahDisplay";
 import AudioPlayer from "@/components/AudioPlayer";
 import islamicHeader from "@/assets/islamic-header.jpg";
 import islamicBg from "@/assets/islamic-bg-pattern.jpg";
+import { useNavigate } from "react-router-dom";
+import { BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Header */}
