@@ -17,6 +17,15 @@ const Index = () => {
         style={{ backgroundImage: `url(${islamicHeader})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/30" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/adhkar")}
+          className="absolute top-4 left-4 z-20 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 backdrop-blur-sm gap-1.5"
+        >
+          <BookOpen className="h-4 w-4" />
+          الأذكار
+        </Button>
         <div className="relative z-10 text-center">
           <h1 className="text-4xl md:text-5xl font-amiri font-bold text-primary-foreground drop-shadow-lg">
             ختمة القرآن الكريم
