@@ -4,6 +4,9 @@ const config: CapacitorConfig = {
   appId: 'com.quran.khatmaapp',
   appName: 'ختمة القرآن الكريم',
   webDir: 'dist',
+  server: {
+    allowNavigation: ['cdn.islamic.network', 'api.alquran.cloud', '*.islamic.network']
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2500,
