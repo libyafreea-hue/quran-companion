@@ -117,9 +117,32 @@ function createWebController(
     currentIndex = index;
     onAyahChange?.(index);
 
-    audio = new Audio(urls[index]);
+    // Clean up previous audio element
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+      audio = null;
+    }
+
+    audio = new Audio();
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
     audio.onended = () => playNext(index + 1);
-    audio.play().catch(() => onEnd());
+    audio.onerror = (e) => {
+      console.error('Audio error at ayah', index, e);
+      // Try next ayah instead of stopping completely
+      if (index + 1 < urls.length) {
+        playNext(index + 1);
+      } else {
+        onEnd();
+      }
+    };
+    audio.src = urls[index];
+    audio.play().catch((err) => {
+      console.error('Audio play failed:', err);
+      onEnd();
+    });
   };
 
   return {
