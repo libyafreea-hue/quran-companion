@@ -127,7 +127,6 @@ function createWebController(
 
     audio = new Audio();
     audio.preload = 'auto';
-    audio.crossOrigin = 'anonymous';
     audio.onended = () => playNext(index + 1);
     audio.onerror = (e) => {
       console.error('Audio error at ayah', index, e);
