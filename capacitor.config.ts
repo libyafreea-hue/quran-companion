@@ -5,15 +5,13 @@ const config: CapacitorConfig = {
   appName: 'ختمة القرآن الكريم',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
-    cleartext: true,  // <-- هذا مهم جداً للصوت
+    cleartext: true,
     allowNavigation: [
-      'cdn.islamic.network',
       'api.alquran.cloud',
+      'cdn.islamic.network',
       '*.islamic.network',
-      '*.quran.com',
       '*.quranicaudio.com',
-      '*'
+      '*.quran.com'
     ]
   },
   plugins: {

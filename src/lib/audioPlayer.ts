@@ -7,14 +7,95 @@ export interface AudioController {
   isNative: boolean;
 }
 
-// Creates an audio controller that works in background on native
 export async function createAudioController(
   urls: string[],
   onEnd: () => void,
   onAyahChange?: (index: number) => void
 ): Promise<AudioController> {
-  // Always use web player (HTML5 Audio)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      return await createNativeController(urls, onEnd, onAyahChange);
+    } catch (e) {
+      console.warn("Native audio failed, falling back to web:", e);
+    }
+  }
   return createWebController(urls, onEnd, onAyahChange);
+}
+
+async function createNativeController(
+  urls: string[],
+  onEnd: () => void,
+  onAyahChange?: (index: number) => void
+): Promise<AudioController> {
+  const { AudioPlayer } = await import("@mediagrid/capacitor-native-audio");
+
+  let currentIndex = 0;
+  let stopped = false;
+  let listenerHandle: any = null;
+
+  const playNext = async (index: number) => {
+    if (stopped || index >= urls.length) {
+      onEnd();
+      return;
+    }
+    currentIndex = index;
+    onAyahChange?.(index);
+
+    try {
+      // Clean up previous
+      if (listenerHandle) {
+        listenerHandle.remove();
+        listenerHandle = null;
+      }
+      try { await AudioPlayer.destroy({ audioId: "quran" }); } catch {}
+
+      // Create, initialize, listen for end, then play
+      await AudioPlayer.create({
+        audioId: "quran",
+        audioSource: urls[index],
+        friendlyTitle: "القرآن الكريم",
+        useForNotification: true,
+        isBackgroundMusic: false,
+      });
+
+      await AudioPlayer.initialize({ audioId: "quran" });
+
+      listenerHandle = await AudioPlayer.onAudioEnd(
+        { audioId: "quran" },
+        () => playNext(index + 1)
+      );
+
+      await AudioPlayer.play({ audioId: "quran" });
+    } catch (err) {
+      console.error("Native audio playNext error:", err);
+      if (index + 1 < urls.length) {
+        playNext(index + 1);
+      } else {
+        onEnd();
+      }
+    }
+  };
+
+  return {
+    isNative: true,
+    play: async () => {
+      stopped = false;
+      await playNext(currentIndex);
+    },
+    pause: () => {
+      try { AudioPlayer.pause({ audioId: "quran" }); } catch {}
+    },
+    stop: () => {
+      stopped = true;
+      try { AudioPlayer.stop({ audioId: "quran" }); } catch {}
+      try { AudioPlayer.destroy({ audioId: "quran" }); } catch {}
+      if (listenerHandle) {
+        listenerHandle.remove();
+        listenerHandle = null;
+      }
+      currentIndex = 0;
+    },
+  };
 }
 
 function createWebController(
@@ -34,7 +115,6 @@ function createWebController(
     currentIndex = index;
     onAyahChange?.(index);
 
-    // Clean up previous audio element
     if (audio) {
       audio.pause();
       audio.removeAttribute('src');
@@ -47,7 +127,6 @@ function createWebController(
     audio.onended = () => playNext(index + 1);
     audio.onerror = (e) => {
       console.error('Audio error at ayah', index, e);
-      // Try next ayah instead of stopping completely
       if (index + 1 < urls.length) {
         playNext(index + 1);
       } else {
