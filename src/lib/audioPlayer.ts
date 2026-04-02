@@ -13,25 +13,69 @@ export async function createAudioController(
   onAyahChange?: (index: number) => void
 ): Promise<AudioController> {
   if (Capacitor.isNativePlatform()) {
-    try {
-      return await createNativeController(urls, onEnd, onAyahChange);
-    } catch (e) {
-      console.warn("Native audio failed, falling back to web:", e);
-    }
+    return createNativeWebController(urls, onEnd, onAyahChange);
   }
   return createWebController(urls, onEnd, onAyahChange);
 }
 
-async function createNativeController(
+/**
+ * Native: download audio to cache via Capacitor Filesystem, 
+ * then play from local file URI using HTMLAudioElement.
+ * This fixes Android WebView refusing to stream remote audio.
+ */
+function createNativeWebController(
   urls: string[],
   onEnd: () => void,
   onAyahChange?: (index: number) => void
-): Promise<AudioController> {
-  const { AudioPlayer } = await import("@mediagrid/capacitor-native-audio");
-
+): AudioController {
+  let audio: HTMLAudioElement | null = null;
   let currentIndex = 0;
   let stopped = false;
-  let listenerHandle: any = null;
+
+  const downloadAndGetLocalUri = async (url: string): Promise<string> => {
+    const { Filesystem, Directory } = await import("@capacitor/filesystem");
+
+    // Create a safe filename from the URL
+    const safeName = url.replace(/[^a-zA-Z0-9]/g, "_").slice(-80) + ".mp3";
+
+    // Check if already cached
+    try {
+      const result = await Filesystem.getUri({
+        directory: Directory.Cache,
+        path: safeName,
+      });
+      return Capacitor.convertFileSrc(result.uri);
+    } catch {
+      // Not cached, download it
+    }
+
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    // Convert blob to base64
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    await Filesystem.writeFile({
+      directory: Directory.Cache,
+      path: safeName,
+      data: base64,
+    });
+
+    const { uri } = await Filesystem.getUri({
+      directory: Directory.Cache,
+      path: safeName,
+    });
+
+    return Capacitor.convertFileSrc(uri);
+  };
 
   const playNext = async (index: number) => {
     if (stopped || index >= urls.length) {
@@ -41,33 +85,33 @@ async function createNativeController(
     currentIndex = index;
     onAyahChange?.(index);
 
+    // Clean up previous audio
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      audio = null;
+    }
+
     try {
-      // Clean up previous
-      if (listenerHandle) {
-        listenerHandle.remove();
-        listenerHandle = null;
-      }
-      try { await AudioPlayer.destroy({ audioId: "quran" }); } catch {}
+      const localSrc = await downloadAndGetLocalUri(urls[index]);
 
-      // Create, initialize, listen for end, then play
-      await AudioPlayer.create({
-        audioId: "quran",
-        audioSource: urls[index],
-        friendlyTitle: "القرآن الكريم",
-        useForNotification: true,
-        isBackgroundMusic: false,
-      });
+      if (stopped) return; // Check again after async download
 
-      await AudioPlayer.initialize({ audioId: "quran" });
-
-      listenerHandle = await AudioPlayer.onAudioEnd(
-        { audioId: "quran" },
-        () => playNext(index + 1)
-      );
-
-      await AudioPlayer.play({ audioId: "quran" });
+      audio = new Audio();
+      audio.onended = () => playNext(index + 1);
+      audio.onerror = (e) => {
+        console.error("Native audio error at ayah", index, e);
+        if (index + 1 < urls.length) {
+          playNext(index + 1);
+        } else {
+          onEnd();
+        }
+      };
+      audio.src = localSrc;
+      await audio.play();
     } catch (err) {
-      console.error("Native audio playNext error:", err);
+      console.error("Download/play error at ayah", index, err);
       if (index + 1 < urls.length) {
         playNext(index + 1);
       } else {
@@ -83,21 +127,22 @@ async function createNativeController(
       await playNext(currentIndex);
     },
     pause: () => {
-      try { AudioPlayer.pause({ audioId: "quran" }); } catch {}
+      audio?.pause();
     },
     stop: () => {
       stopped = true;
-      try { AudioPlayer.stop({ audioId: "quran" }); } catch {}
-      try { AudioPlayer.destroy({ audioId: "quran" }); } catch {}
-      if (listenerHandle) {
-        listenerHandle.remove();
-        listenerHandle = null;
+      if (audio) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+        audio = null;
       }
       currentIndex = 0;
     },
   };
 }
 
+/** Web: standard HTML5 Audio (works fine in browsers) */
 function createWebController(
   urls: string[],
   onEnd: () => void,
@@ -117,16 +162,16 @@ function createWebController(
 
     if (audio) {
       audio.pause();
-      audio.removeAttribute('src');
+      audio.removeAttribute("src");
       audio.load();
       audio = null;
     }
 
     audio = new Audio();
-    audio.preload = 'auto';
+    audio.preload = "auto";
     audio.onended = () => playNext(index + 1);
     audio.onerror = (e) => {
-      console.error('Audio error at ayah', index, e);
+      console.error("Audio error at ayah", index, e);
       if (index + 1 < urls.length) {
         playNext(index + 1);
       } else {
@@ -135,7 +180,7 @@ function createWebController(
     };
     audio.src = urls[index];
     audio.play().catch((err) => {
-      console.error('Audio play failed:', err);
+      console.error("Audio play failed:", err);
       onEnd();
     });
   };
