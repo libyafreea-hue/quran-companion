@@ -5,7 +5,16 @@ const config: CapacitorConfig = {
   appName: 'ختمة القرآن الكريم',
   webDir: 'dist',
   server: {
-    allowNavigation: ['cdn.islamic.network', 'api.alquran.cloud', '*.islamic.network']
+    androidScheme: 'https',
+    cleartext: true,  // <-- هذا مهم جداً للصوت
+    allowNavigation: [
+      'cdn.islamic.network',
+      'api.alquran.cloud',
+      '*.islamic.network',
+      '*.quran.com',
+      '*.quranicaudio.com',
+      '*'
+    ]
   },
   plugins: {
     SplashScreen: {
