@@ -90,16 +90,16 @@ async function createNativeController(
       // Download audio file to local cache first
       const localUri = await downloadToCache(urls[index], `ayah_${index}`);
 
-      listenerHandle = await AudioPlayer.onCompleted(
+      // Create and initialize audio source
+      await AudioPlayer.create({ audioId: "quran", source: localUri, friendlyTitle: "Quran", useForNotification: true });
+      await AudioPlayer.initialize({ audioId: "quran" });
+
+      listenerHandle = await AudioPlayer.onAudioEnd(
         { audioId: "quran" },
         () => playNext(index + 1)
       );
 
-      await AudioPlayer.play({
-        audioId: "quran",
-        source: localUri,
-        isBackgroundMusic: false,
-      });
+      await AudioPlayer.play({ audioId: "quran" });
     } catch (err) {
       console.error("Native audio playNext error:", err);
       // Try next ayah
