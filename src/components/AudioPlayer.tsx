@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Volume2, VolumeX, Play, Pause, Loader2 } from "lucide-react";
 import { createAudioController, AudioController } from "@/lib/audioPlayer";
+import { Progress } from "@/components/ui/progress";
 
 interface AudioPlayerProps {
   surahNumber: number;
@@ -10,13 +11,17 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [currentAyah, setCurrentAyah] = useState(0);
+  const [totalAyahs, setTotalAyahs] = useState(0);
   const controllerRef = useRef<AudioController | null>(null);
   const urlsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    // Reset on surah change
     setIsPlaying(false);
     setAudioReady(false);
+    setDownloadProgress(null);
+    setCurrentAyah(0);
     controllerRef.current?.stop();
     controllerRef.current = null;
 
@@ -26,6 +31,7 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
       .then((json) => {
         if (json.code === 200) {
           urlsRef.current = json.data.ayahs.map((a: any) => a.audio);
+          setTotalAyahs(json.data.ayahs.length);
           setAudioReady(true);
         }
       })
@@ -45,17 +51,26 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
       controllerRef.current.stop();
       controllerRef.current = null;
       setIsPlaying(false);
+      setDownloadProgress(null);
       return;
     }
 
     setIsPlaying(true);
-    const controller = await createAudioController(
-      urlsRef.current,
-      () => {
+    const controller = await createAudioController(urlsRef.current, {
+      onEnd: () => {
         setIsPlaying(false);
+        setDownloadProgress(null);
+        setCurrentAyah(0);
         controllerRef.current = null;
-      }
-    );
+      },
+      onAyahChange: (index) => {
+        setCurrentAyah(index + 1);
+        setDownloadProgress(null);
+      },
+      onDownloadProgress: (percent) => {
+        setDownloadProgress(percent);
+      },
+    });
     controllerRef.current = controller;
     await controller.play();
   };
@@ -64,10 +79,12 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
     controllerRef.current?.stop();
     controllerRef.current = null;
     setIsPlaying(false);
+    setDownloadProgress(null);
+    setCurrentAyah(0);
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col items-center gap-2 w-full max-w-xs">
       <button
         onClick={isPlaying ? stopAudio : playAudio}
         disabled={isLoading || !audioReady}
@@ -89,6 +106,23 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
           <Volume2 className="w-4 h-4" />
         )}
       </button>
+
+      {/* Download progress */}
+      {downloadProgress !== null && downloadProgress < 100 && (
+        <div className="w-full space-y-1">
+          <Progress value={downloadProgress} className="h-2" />
+          <p className="text-xs text-muted-foreground text-center">
+            جاري تحميل الآية... {downloadProgress}%
+          </p>
+        </div>
+      )}
+
+      {/* Current ayah indicator */}
+      {isPlaying && currentAyah > 0 && (
+        <p className="text-xs text-muted-foreground">
+          الآية {currentAyah} من {totalAyahs}
+        </p>
+      )}
     </div>
   );
 };
