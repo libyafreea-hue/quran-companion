@@ -7,26 +7,29 @@ export interface AudioController {
   isNative: boolean;
 }
 
+export interface AudioCallbacks {
+  onEnd: () => void;
+  onAyahChange?: (index: number) => void;
+  onDownloadProgress?: (percent: number) => void;
+}
+
 export async function createAudioController(
   urls: string[],
-  onEnd: () => void,
-  onAyahChange?: (index: number) => void
+  callbacks: AudioCallbacks
 ): Promise<AudioController> {
   if (Capacitor.isNativePlatform()) {
-    return createNativeWebController(urls, onEnd, onAyahChange);
+    return createNativeWebController(urls, callbacks);
   }
-  return createWebController(urls, onEnd, onAyahChange);
+  return createWebController(urls, callbacks);
 }
 
 /**
- * Native: download audio to cache via Capacitor Filesystem, 
+ * Native: download audio to cache via Capacitor Filesystem,
  * then play from local file URI using HTMLAudioElement.
- * This fixes Android WebView refusing to stream remote audio.
  */
 function createNativeWebController(
   urls: string[],
-  onEnd: () => void,
-  onAyahChange?: (index: number) => void
+  { onEnd, onAyahChange, onDownloadProgress }: AudioCallbacks
 ): AudioController {
   let audio: HTMLAudioElement | null = null;
   let currentIndex = 0;
@@ -34,11 +37,8 @@ function createNativeWebController(
 
   const downloadAndGetLocalUri = async (url: string): Promise<string> => {
     const { Filesystem, Directory } = await import("@capacitor/filesystem");
-
-    // Create a safe filename from the URL
     const safeName = url.replace(/[^a-zA-Z0-9]/g, "_").slice(-80) + ".mp3";
 
-    // Check if already cached
     try {
       const result = await Filesystem.getUri({
         directory: Directory.Cache,
@@ -46,34 +46,51 @@ function createNativeWebController(
       });
       return Capacitor.convertFileSrc(result.uri);
     } catch {
-      // Not cached, download it
+      // Not cached
     }
 
+    onDownloadProgress?.(0);
     const response = await fetch(url);
-    const blob = await response.blob();
+    const contentLength = response.headers.get("content-length");
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
 
-    // Convert blob to base64
-    const base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        resolve(result.split(",")[1]);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    if (total && response.body) {
+      const reader = response.body.getReader();
+      const chunks: BlobPart[] = [];
+      let received = 0;
 
-    await Filesystem.writeFile({
-      directory: Directory.Cache,
-      path: safeName,
-      data: base64,
-    });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        onDownloadProgress?.(Math.round((received / total) * 100));
+      }
 
+      const blob = new Blob(chunks, { type: "audio/mpeg" });
+      const base64 = await blobToBase64(blob);
+
+      await Filesystem.writeFile({
+        directory: Directory.Cache,
+        path: safeName,
+        data: base64,
+      });
+    } else {
+      // Fallback: no content-length
+      const blob = await response.blob();
+      const base64 = await blobToBase64(blob);
+      await Filesystem.writeFile({
+        directory: Directory.Cache,
+        path: safeName,
+        data: base64,
+      });
+    }
+
+    onDownloadProgress?.(100);
     const { uri } = await Filesystem.getUri({
       directory: Directory.Cache,
       path: safeName,
     });
-
     return Capacitor.convertFileSrc(uri);
   };
 
@@ -85,7 +102,6 @@ function createNativeWebController(
     currentIndex = index;
     onAyahChange?.(index);
 
-    // Clean up previous audio
     if (audio) {
       audio.pause();
       audio.removeAttribute("src");
@@ -95,28 +111,21 @@ function createNativeWebController(
 
     try {
       const localSrc = await downloadAndGetLocalUri(urls[index]);
-
-      if (stopped) return; // Check again after async download
+      if (stopped) return;
 
       audio = new Audio();
       audio.onended = () => playNext(index + 1);
       audio.onerror = (e) => {
         console.error("Native audio error at ayah", index, e);
-        if (index + 1 < urls.length) {
-          playNext(index + 1);
-        } else {
-          onEnd();
-        }
+        if (index + 1 < urls.length) playNext(index + 1);
+        else onEnd();
       };
       audio.src = localSrc;
       await audio.play();
     } catch (err) {
       console.error("Download/play error at ayah", index, err);
-      if (index + 1 < urls.length) {
-        playNext(index + 1);
-      } else {
-        onEnd();
-      }
+      if (index + 1 < urls.length) playNext(index + 1);
+      else onEnd();
     }
   };
 
@@ -126,9 +135,7 @@ function createNativeWebController(
       stopped = false;
       await playNext(currentIndex);
     },
-    pause: () => {
-      audio?.pause();
-    },
+    pause: () => audio?.pause(),
     stop: () => {
       stopped = true;
       if (audio) {
@@ -142,11 +149,10 @@ function createNativeWebController(
   };
 }
 
-/** Web: standard HTML5 Audio (works fine in browsers) */
+/** Web: standard HTML5 Audio */
 function createWebController(
   urls: string[],
-  onEnd: () => void,
-  onAyahChange?: (index: number) => void
+  { onEnd, onAyahChange }: AudioCallbacks
 ): AudioController {
   let audio: HTMLAudioElement | null = null;
   let currentIndex = 0;
@@ -172,11 +178,8 @@ function createWebController(
     audio.onended = () => playNext(index + 1);
     audio.onerror = (e) => {
       console.error("Audio error at ayah", index, e);
-      if (index + 1 < urls.length) {
-        playNext(index + 1);
-      } else {
-        onEnd();
-      }
+      if (index + 1 < urls.length) playNext(index + 1);
+      else onEnd();
     };
     audio.src = urls[index];
     audio.play().catch((err) => {
@@ -191,9 +194,7 @@ function createWebController(
       stopped = false;
       playNext(currentIndex);
     },
-    pause: () => {
-      audio?.pause();
-    },
+    pause: () => audio?.pause(),
     stop: () => {
       stopped = true;
       if (audio) {
@@ -203,4 +204,16 @@ function createWebController(
       currentIndex = 0;
     },
   };
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
