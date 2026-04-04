@@ -34,25 +34,59 @@ function createNativeWebController(
   let audio: HTMLAudioElement | null = null;
   let currentIndex = 0;
   let stopped = false;
+  let currentObjectUrl: string | null = null;
 
-  const downloadAndGetLocalUri = async (url: string): Promise<string> => {
+  const cleanupObjectUrl = () => {
+    if (currentObjectUrl) {
+      URL.revokeObjectURL(currentObjectUrl);
+      currentObjectUrl = null;
+    }
+  };
+
+  const getCachedBlob = async (path: string): Promise<Blob | null> => {
+    const { Filesystem, Directory } = await import("@capacitor/filesystem");
+
+    try {
+      await Filesystem.stat({
+        directory: Directory.Cache,
+        path,
+      });
+
+      const cachedFile = await Filesystem.readFile({
+        directory: Directory.Cache,
+        path,
+      });
+
+      if (typeof cachedFile.data !== "string") {
+        return null;
+      }
+
+      return base64ToBlob(cachedFile.data, "audio/mpeg");
+    } catch {
+      return null;
+    }
+  };
+
+  const downloadAndGetPlayableSrc = async (url: string): Promise<string> => {
     const { Filesystem, Directory } = await import("@capacitor/filesystem");
     const safeName = url.replace(/[^a-zA-Z0-9]/g, "_").slice(-80) + ".mp3";
 
-    try {
-      const result = await Filesystem.getUri({
-        directory: Directory.Cache,
-        path: safeName,
-      });
-      return Capacitor.convertFileSrc(result.uri);
-    } catch {
-      // Not cached
+    const cachedBlob = await getCachedBlob(safeName);
+    if (cachedBlob) {
+      cleanupObjectUrl();
+      currentObjectUrl = URL.createObjectURL(cachedBlob);
+      return currentObjectUrl;
     }
 
     onDownloadProgress?.(0);
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download audio: ${response.status}`);
+    }
+
     const contentLength = response.headers.get("content-length");
     const total = contentLength ? parseInt(contentLength, 10) : 0;
+    let blob: Blob;
 
     if (total && response.body) {
       const reader = response.body.getReader();
@@ -67,7 +101,7 @@ function createNativeWebController(
         onDownloadProgress?.(Math.round((received / total) * 100));
       }
 
-      const blob = new Blob(chunks, { type: "audio/mpeg" });
+      blob = new Blob(chunks, { type: "audio/mpeg" });
       const base64 = await blobToBase64(blob);
 
       await Filesystem.writeFile({
@@ -77,7 +111,7 @@ function createNativeWebController(
       });
     } else {
       // Fallback: no content-length
-      const blob = await response.blob();
+      blob = await response.blob();
       const base64 = await blobToBase64(blob);
       await Filesystem.writeFile({
         directory: Directory.Cache,
@@ -87,15 +121,14 @@ function createNativeWebController(
     }
 
     onDownloadProgress?.(100);
-    const { uri } = await Filesystem.getUri({
-      directory: Directory.Cache,
-      path: safeName,
-    });
-    return Capacitor.convertFileSrc(uri);
+    cleanupObjectUrl();
+    currentObjectUrl = URL.createObjectURL(blob);
+    return currentObjectUrl;
   };
 
   const playNext = async (index: number) => {
     if (stopped || index >= urls.length) {
+      cleanupObjectUrl();
       onEnd();
       return;
     }
@@ -107,24 +140,31 @@ function createNativeWebController(
       audio.removeAttribute("src");
       audio.load();
       audio = null;
+      cleanupObjectUrl();
     }
 
     try {
-      const localSrc = await downloadAndGetLocalUri(urls[index]);
+      const localSrc = await downloadAndGetPlayableSrc(urls[index]);
       if (stopped) return;
 
       audio = new Audio();
-      audio.onended = () => playNext(index + 1);
+      audio.preload = "auto";
+      audio.onended = () => {
+        cleanupObjectUrl();
+        void playNext(index + 1);
+      };
       audio.onerror = (e) => {
+        cleanupObjectUrl();
         console.error("Native audio error at ayah", index, e);
-        if (index + 1 < urls.length) playNext(index + 1);
+        if (index + 1 < urls.length) void playNext(index + 1);
         else onEnd();
       };
       audio.src = localSrc;
       await audio.play();
     } catch (err) {
+      cleanupObjectUrl();
       console.error("Download/play error at ayah", index, err);
-      if (index + 1 < urls.length) playNext(index + 1);
+      if (index + 1 < urls.length) void playNext(index + 1);
       else onEnd();
     }
   };
@@ -144,6 +184,7 @@ function createNativeWebController(
         audio.load();
         audio = null;
       }
+      cleanupObjectUrl();
       currentIndex = 0;
     },
   };
@@ -216,4 +257,22 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const byteCharacters = atob(base64);
+  const byteArrays: Uint8Array[] = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+    const slice = byteCharacters.slice(offset, offset + 1024);
+    const byteNumbers = new Array(slice.length);
+
+    for (let i = 0; i < slice.length; i += 1) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    byteArrays.push(new Uint8Array(byteNumbers));
+  }
+
+  return new Blob(byteArrays, { type: mimeType });
 }
