@@ -261,7 +261,7 @@ function blobToBase64(blob: Blob): Promise<string> {
 
 function base64ToBlob(base64: string, mimeType: string): Blob {
   const byteCharacters = atob(base64);
-  const byteArrays: Uint8Array[] = [];
+  const byteArrays: ArrayBuffer[] = [];
 
   for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
     const slice = byteCharacters.slice(offset, offset + 1024);
@@ -271,7 +271,8 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
       byteNumbers[i] = slice.charCodeAt(i);
     }
 
-    byteArrays.push(new Uint8Array(byteNumbers));
+    const bytes = new Uint8Array(byteNumbers);
+    byteArrays.push(bytes.buffer.slice(0));
   }
 
   return new Blob(byteArrays, { type: mimeType });
