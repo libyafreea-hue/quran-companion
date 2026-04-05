@@ -46,6 +46,13 @@ export function createWebController(
       playNext(currentIndex);
     },
     pause: () => audio?.pause(),
+    resume: () => {
+      if (audio) {
+        audio.play().catch((error) => {
+          console.error("Audio resume failed:", error);
+        });
+      }
+    },
     stop: () => {
       stopped = true;
       if (audio) {
