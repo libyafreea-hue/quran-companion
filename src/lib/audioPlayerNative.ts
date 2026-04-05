@@ -146,6 +146,13 @@ export function createNativeController(
         console.error("Native audio pause failed:", error);
       });
     },
+    resume: () => {
+      if (!created) return;
+
+      void NativeAudioPlayer.play({ audioId }).catch((error) => {
+        console.error("Native audio resume failed:", error);
+      });
+    },
     stop: () => {
       stopped = true;
       currentIndex = 0;

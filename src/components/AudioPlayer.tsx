@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX, Play, Pause, Loader2 } from "lucide-react";
+import { Volume2, Play, Pause, Square, Loader2 } from "lucide-react";
 import { createAudioController, AudioController } from "@/lib/audioPlayer";
 import { Progress } from "@/components/ui/progress";
 
@@ -9,6 +9,7 @@ interface AudioPlayerProps {
 
 const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
@@ -19,6 +20,7 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
 
   useEffect(() => {
     setIsPlaying(false);
+    setIsPaused(false);
     setAudioReady(false);
     setDownloadProgress(null);
     setCurrentAyah(0);
@@ -44,21 +46,23 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
     };
   }, [surahNumber]);
 
-  const playAudio = async () => {
+  const startPlaying = async () => {
     if (urlsRef.current.length === 0) return;
 
-    if (controllerRef.current && isPlaying) {
-      controllerRef.current.stop();
-      controllerRef.current = null;
-      setIsPlaying(false);
-      setDownloadProgress(null);
+    // If paused, resume
+    if (isPaused && controllerRef.current) {
+      controllerRef.current.resume();
+      setIsPlaying(true);
+      setIsPaused(false);
       return;
     }
 
     setIsPlaying(true);
+    setIsPaused(false);
     const controller = await createAudioController(urlsRef.current, {
       onEnd: () => {
         setIsPlaying(false);
+        setIsPaused(false);
         setDownloadProgress(null);
         setCurrentAyah(0);
         controllerRef.current = null;
@@ -75,37 +79,64 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
     await controller.play();
   };
 
+  const pauseAudio = () => {
+    controllerRef.current?.pause();
+    setIsPlaying(false);
+    setIsPaused(true);
+  };
+
   const stopAudio = () => {
     controllerRef.current?.stop();
     controllerRef.current = null;
     setIsPlaying(false);
+    setIsPaused(false);
     setDownloadProgress(null);
     setCurrentAyah(0);
   };
 
   return (
     <div className="flex flex-col items-center gap-2 w-full max-w-xs">
-      <button
-        onClick={isPlaying ? stopAudio : playAudio}
-        disabled={isLoading || !audioReady}
-        className="flex items-center gap-2 px-4 py-2 rounded-full gradient-islamic text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shadow-islamic"
-      >
-        {isLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : isPlaying ? (
-          <Pause className="w-5 h-5" />
-        ) : (
-          <Play className="w-5 h-5" />
+      <div className="flex items-center gap-2">
+        {/* Play / Pause button */}
+        <button
+          onClick={isPlaying ? pauseAudio : startPlaying}
+          disabled={isLoading || !audioReady}
+          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-islamic text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shadow-islamic"
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : isPlaying ? (
+            <Pause className="w-5 h-5" />
+          ) : (
+            <Play className="w-5 h-5" />
+          )}
+          <span className="text-sm font-bold">
+            {isLoading
+              ? "جاري التحميل..."
+              : isPlaying
+              ? "إيقاف مؤقت"
+              : isPaused
+              ? "متابعة"
+              : "استماع"}
+          </span>
+          {isPlaying ? (
+            <Volume2 className="w-4 h-4 animate-pulse" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
+        </button>
+
+        {/* Stop button - only show when playing or paused */}
+        {(isPlaying || isPaused) && (
+          <button
+            onClick={stopAudio}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity shadow-islamic"
+            title="إيقاف كامل"
+          >
+            <Square className="w-4 h-4" />
+          </button>
         )}
-        <span className="text-sm font-bold">
-          {isLoading ? "جاري التحميل..." : isPlaying ? "إيقاف" : "استماع"}
-        </span>
-        {isPlaying ? (
-          <VolumeX className="w-4 h-4" />
-        ) : (
-          <Volume2 className="w-4 h-4" />
-        )}
-      </button>
+      </div>
 
       {/* Download progress */}
       {downloadProgress !== null && downloadProgress < 100 && (
@@ -118,7 +149,7 @@ const AudioPlayer = ({ surahNumber }: AudioPlayerProps) => {
       )}
 
       {/* Current ayah indicator */}
-      {isPlaying && currentAyah > 0 && (
+      {(isPlaying || isPaused) && currentAyah > 0 && (
         <p className="text-xs text-muted-foreground">
           الآية {currentAyah} من {totalAyahs}
         </p>

@@ -1,6 +1,7 @@
 export interface AudioController {
   play: () => Promise<void>;
   pause: () => void;
+  resume: () => void;
   stop: () => void;
   isNative: boolean;
 }
