@@ -9,7 +9,7 @@ export async function createAudioController(
   urls: string[],
   callbacks: AudioCallbacks
 ): Promise<AudioController> {
-  if (Capacitor.isNativePlatform()) {
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() !== "android") {
     return createNativeController(urls, callbacks);
   }
 
