@@ -14,6 +14,7 @@ import {
 } from "@/lib/notifications";
 import { useToast } from "@/hooks/use-toast";
 import { Capacitor } from "@capacitor/core";
+import { showInterstitial } from "@/lib/ads";
 
 type Tab = "morning" | "evening";
 
@@ -25,6 +26,12 @@ const Adhkar = () => {
   const [remindersActive, setRemindersActive] = useState(settings.adhkarEnabled);
 
   const adhkarList = activeTab === "morning" ? morningAdhkar : eveningAdhkar;
+
+  const handleTabChange = async (tab: Tab) => {
+    if (tab === activeTab) return;
+    await showInterstitial(tab === "morning" ? "morning" : "evening");
+    setActiveTab(tab);
+  };
 
   const handleToggleReminders = async () => {
     if (!Capacitor.isNativePlatform()) {
@@ -73,7 +80,7 @@ const Adhkar = () => {
       {/* Tabs */}
       <div className="flex border-b border-border">
         <button
-          onClick={() => setActiveTab("morning")}
+          onClick={() => handleTabChange("morning")}
           className={`flex-1 py-3 text-center font-amiri text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
             activeTab === "morning"
               ? "text-primary border-b-2 border-primary bg-primary/5"
@@ -84,7 +91,7 @@ const Adhkar = () => {
           أذكار الصباح
         </button>
         <button
-          onClick={() => setActiveTab("evening")}
+          onClick={() => handleTabChange("evening")}
           className={`flex-1 py-3 text-center font-amiri text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
             activeTab === "evening"
               ? "text-primary border-b-2 border-primary bg-primary/5"

@@ -6,6 +6,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import SurahList from "@/components/SurahList";
 import { ChevronRight, ChevronLeft, Home, Loader2, Menu, X } from "lucide-react";
 import islamicHeader from "@/assets/islamic-header.jpg";
+import { showInterstitial } from "@/lib/ads";
 
 const AYAHS_PER_PAGE = 10;
 
@@ -44,13 +45,20 @@ const SurahReader = () => {
           </h1>
         </div>
         <button
-          onClick={() => navigate("/")}
+          onClick={async () => {
+            await showInterstitial("home");
+            navigate("/");
+          }}
           className="absolute top-4 left-4 z-10 p-2 rounded-full bg-primary-foreground/20 backdrop-blur-sm text-primary-foreground hover:bg-primary-foreground/30 transition-colors"
         >
           <Home className="w-5 h-5" />
         </button>
         <button
-          onClick={() => setShowSidebar(!showSidebar)}
+          onClick={async () => {
+            const opening = !showSidebar;
+            if (opening) await showInterstitial("menu");
+            setShowSidebar(opening);
+          }}
           className="absolute top-4 right-4 z-10 p-2 rounded-full bg-primary-foreground/20 backdrop-blur-sm text-primary-foreground hover:bg-primary-foreground/30 transition-colors"
         >
           {showSidebar ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
