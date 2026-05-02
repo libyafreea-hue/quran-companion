@@ -61,6 +61,12 @@
 -keep class kotlin.Metadata { *; }
 
 # ============================================================
+# Conscrypt (optional OkHttp dependency, safe to ignore)
+# ============================================================
+-dontwarn org.conscrypt.Conscrypt
+-dontwarn org.conscrypt.OpenSSLProvider
+
+# ============================================================
 # Capacitor — keep plugin classes & JS bridge
 # ============================================================
 -keep class com.getcapacitor.** { *; }
