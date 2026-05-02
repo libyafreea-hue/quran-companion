@@ -1,4 +1,4 @@
-package com.quran.khatmaapp;
+package com.quran.khatmaapp1;
 
 import com.getcapacitor.BridgeActivity;
 
