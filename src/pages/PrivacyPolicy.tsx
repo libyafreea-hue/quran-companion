@@ -20,7 +20,7 @@ const PrivacyPolicy = () => {
             سياسة الخصوصية
           </h1>
           <p className="text-center text-muted-foreground text-sm mb-8">
-            آخر تحديث: ٢٧ فبراير ٢٠٢٦
+            آخر تحديث: ٣ مايو ٢٠٢٦
           </p>
 
           <div className="space-y-6 font-arabic leading-8 text-foreground">
@@ -62,17 +62,34 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-xl font-bold font-amiri text-primary mb-2">الإعلانات</h2>
               <p>
-                التطبيق <strong>لا يحتوي على أي إعلانات</strong> ولا يستخدم أي شبكات إعلانية.
+                يحتوي هذا التطبيق على <strong>إعلانات</strong> يتم عرضها عبر خدمة <strong>Google AdMob</strong> التابعة لشركة Google. تساعدنا هذه الإعلانات على الاستمرار في تقديم التطبيق مجاناً.
+              </p>
+              <p className="mt-2">
+                قد تقوم خدمة Google AdMob ومزودوها الخارجيون بجمع واستخدام بعض المعلومات (مثل معرّف الإعلان الخاص بجهازك، وعنوان IP، ونوع الجهاز، والتفاعل مع الإعلانات) لعرض إعلانات مخصصة أو غير مخصصة. لا يقوم تطبيقنا بنفسه بجمع أو تخزين أي من هذه البيانات.
+              </p>
+              <p className="mt-2">
+                يمكنك في أي وقت إعادة ضبط معرّف الإعلان أو إيقاف الإعلانات المخصصة من إعدادات جهازك. لمزيد من المعلومات، يمكنك مراجعة سياسة خصوصية Google:
+                {" "}
+                <a
+                  href="https://policies.google.com/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                  dir="ltr"
+                >
+                  https://policies.google.com/privacy
+                </a>
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-bold font-amiri text-primary mb-2">خدمات الطرف الثالث</h2>
               <p>
-                يستخدم التطبيق واجهة برمجة التطبيقات (API) التالية لجلب بيانات القرآن الكريم والتلاوات الصوتية:
+                يستخدم التطبيق الخدمات الخارجية التالية:
               </p>
               <ul className="list-disc list-inside mt-2 text-muted-foreground">
-                <li>AlQuran Cloud API - لنصوص الآيات والتلاوات الصوتية</li>
+                <li>AlQuran Cloud API — لنصوص الآيات والتلاوات الصوتية</li>
+                <li>Google AdMob — لعرض الإعلانات داخل التطبيق</li>
               </ul>
             </section>
 
@@ -86,7 +103,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-xl font-bold font-amiri text-primary mb-2">خصوصية الأطفال</h2>
               <p>
-                التطبيق آمن للاستخدام من قبل جميع الفئات العمرية بما في ذلك الأطفال، حيث لا يجمع أي بيانات ولا يحتوي على محتوى غير مناسب.
+                التطبيق لا يجمع أي بيانات شخصية ولا يحتوي على محتوى غير مناسب. ومع ذلك، نظراً لاحتواء التطبيق على إعلانات من Google AdMob، يُنصح بإشراف الوالدين عند استخدام الأطفال للتطبيق.
               </p>
             </section>
 
