@@ -12,6 +12,9 @@ const AD_UNIT_IDS: Record<AdSlot, string> = {
 };
 
 let initialized = false;
+let lastShownAt = 0;
+const MIN_INTERVAL_MS = 60_000; // throttle: at most one interstitial per minute
+const preloaded: Partial<Record<AdSlot, boolean>> = {};
 
 async function ensureInit() {
   if (!Capacitor.isNativePlatform()) return false;
@@ -28,17 +31,28 @@ async function ensureInit() {
   }
 }
 
-export async function showInterstitial(slot: AdSlot) {
-  const ok = await ensureInit();
-  if (!ok) return;
-  const adId = AD_UNIT_IDS[slot];
-  try {
-    const options: AdOptions = {
-      adId,
-    };
-    await AdMob.prepareInterstitial(options);
-    await AdMob.showInterstitial();
-  } catch (e) {
-    console.warn("Interstitial failed", slot, e);
-  }
+/**
+ * Fire-and-forget interstitial. Never blocks the UI / navigation.
+ * Throttled so we don't show an ad on every single click.
+ */
+export function showInterstitial(slot: AdSlot): void {
+  if (!Capacitor.isNativePlatform()) return;
+  const now = Date.now();
+  if (now - lastShownAt < MIN_INTERVAL_MS) return;
+  lastShownAt = now;
+
+  // Run async in background so the caller is never awaited.
+  void (async () => {
+    const ok = await ensureInit();
+    if (!ok) return;
+    const adId = AD_UNIT_IDS[slot];
+    try {
+      const options: AdOptions = { adId };
+      await AdMob.prepareInterstitial(options);
+      await AdMob.showInterstitial();
+      preloaded[slot] = false;
+    } catch (e) {
+      console.warn("Interstitial failed", slot, e);
+    }
+  })();
 }
