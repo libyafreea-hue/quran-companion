@@ -5,8 +5,22 @@ export function createWebController(
   { onEnd, onAyahChange }: AudioCallbacks
 ): AudioController {
   let audio: HTMLAudioElement | null = null;
+  let nextAudio: HTMLAudioElement | null = null;
   let currentIndex = 0;
   let stopped = false;
+
+  const prefetch = (index: number) => {
+    if (index >= urls.length) {
+      nextAudio = null;
+      return;
+    }
+    const a = new Audio();
+    a.preload = "auto";
+    a.src = urls[index];
+    // Trigger buffering
+    try { a.load(); } catch {}
+    nextAudio = a;
+  };
 
   const playNext = (index: number) => {
     if (stopped || index >= urls.length) {
@@ -24,19 +38,28 @@ export function createWebController(
       audio = null;
     }
 
-    audio = new Audio();
-    audio.preload = "auto";
+    // Reuse prefetched audio if available
+    if (nextAudio && nextAudio.src === urls[index]) {
+      audio = nextAudio;
+      nextAudio = null;
+    } else {
+      audio = new Audio();
+      audio.preload = "auto";
+      audio.src = urls[index];
+    }
     audio.onended = () => playNext(index + 1);
     audio.onerror = (event) => {
       console.error("Audio error at ayah", index, event);
       if (index + 1 < urls.length) playNext(index + 1);
       else onEnd();
     };
-    audio.src = urls[index];
     audio.play().catch((error) => {
       console.error("Audio play failed:", error);
       onEnd();
     });
+
+    // Start prefetching the next ayah immediately
+    prefetch(index + 1);
   };
 
   return {
@@ -58,6 +81,10 @@ export function createWebController(
       if (audio) {
         audio.pause();
         audio = null;
+      }
+      if (nextAudio) {
+        try { nextAudio.removeAttribute("src"); nextAudio.load(); } catch {}
+        nextAudio = null;
       }
       currentIndex = 0;
     },
