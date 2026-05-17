@@ -20,9 +20,22 @@ const PrivacyPolicy = () => {
           <h1 className="text-3xl font-amiri font-bold text-foreground mb-2 text-center">
             سياسة الخصوصية
           </h1>
-          <p className="text-center text-muted-foreground text-sm mb-8">
-            آخر تحديث: ٣ مايو ٢٠٢٦
+          <p className="text-center text-muted-foreground text-sm mb-4">
+            آخر تحديث: ١٧ مايو ٢٠٢٦
           </p>
+
+          {/* Prominent Ads Declaration */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4 mb-8 flex items-start gap-3">
+            <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-800 dark:text-amber-300 text-lg mb-1">
+                يحتوي هذا التطبيق على إعلانات
+              </p>
+              <p className="text-amber-700 dark:text-amber-400 text-sm leading-relaxed">
+                يستخدم تطبيق ختمة القرآن الكريم خدمة <strong>Google AdMob</strong> لعرض الإعلانات. تساعدنا هذه الإعلانات في الاستمرار بتقديم التطبيق مجاناً للجميع. لمزيد من التفاصيل، يرجى مراجعة قسم الإعلانات أدناه.
+              </p>
+            </div>
+          </div>
 
           <div className="space-y-6 font-arabic leading-8 text-foreground">
             <section>
