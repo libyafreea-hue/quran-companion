@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, AlertTriangle } from "lucide-react";
+
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
