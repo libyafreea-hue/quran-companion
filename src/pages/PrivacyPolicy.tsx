@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
             سياسة الخصوصية
           </h1>
           <p className="text-center text-muted-foreground text-sm mb-4">
-            آخر تحديث: ١٧ مايو ٢٠٢٦
+            آخر تحديث: ١٢ أغسطس ٢٠٢٦
           </p>
 
           {/* Prominent Ads Declaration */}
