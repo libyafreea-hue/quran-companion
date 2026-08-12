@@ -113,9 +113,11 @@ const PrivacyPolicy = () => {
               <p>
                 يستخدم التطبيق الخدمات الخارجية التالية:
               </p>
-              <ul className="list-disc list-inside mt-2 text-muted-foreground">
+              <ul className="list-disc list-inside mt-2 space-y-1 text-muted-foreground">
                 <li>AlQuran Cloud API — لنصوص الآيات والتلاوات الصوتية</li>
                 <li>Google AdMob — لعرض الإعلانات داخل التطبيق</li>
+                <li>Unity Ads — شريك توسيط إعلاني (Mediation)</li>
+                <li>InMobi — شريك توسيط إعلاني (Mediation)</li>
               </ul>
             </section>
 
