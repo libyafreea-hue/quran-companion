@@ -21,9 +21,11 @@ const config: CapacitorConfig = {
       backgroundColor: '#0a3d2a',
       showSpinner: false,
       androidScaleType: 'CENTER_CROP',
-      splashFullScreen: true,
-      splashImmersive: true
+      // Deprecated on Android 15 (LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES)
+      splashFullScreen: false,
+      splashImmersive: false
     }
+
   }
 };
 
