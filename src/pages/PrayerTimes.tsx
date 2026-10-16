@@ -92,7 +92,7 @@ const PrayerTimesPage = () => {
           </div>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="flex items-center gap-2 text-primary-foreground/80"><MapPin className="h-4 w-4" />{settings.location ? timezone.replaceAll('_', ' ').split('/').pop() : 'لم يتم تحديد الموقع'}</p>
+              <p className="flex items-center gap-2 text-primary-foreground/80"><MapPin className="h-4 w-4" />{settings.location ? timezone.replace(/_/g, ' ').split('/').pop() : 'لم يتم تحديد الموقع'}</p>
               {settings.location && <p className="mt-1 text-sm text-primary-foreground/70" dir="ltr">{settings.location.latitude.toFixed(3)}°, {settings.location.longitude.toFixed(3)}°</p>}
             </div>
             <Button variant="secondary" onClick={locate} disabled={locating || saving} className="gap-2">
