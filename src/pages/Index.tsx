@@ -4,7 +4,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import islamicHeader from "@/assets/islamic-header.jpg";
 import islamicBg from "@/assets/islamic-bg-pattern.jpg";
 import { useNavigate } from "react-router-dom";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showInterstitial } from "@/lib/ads";
 
@@ -18,6 +18,15 @@ const Index = () => {
         style={{ backgroundImage: `url(${islamicHeader})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/30" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/prayer-times')}
+          className="absolute top-4 right-4 z-20 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 backdrop-blur-sm gap-1.5"
+        >
+          <Bell className="h-4 w-4" />
+          الأذان
+        </Button>
         <Button
           variant="ghost"
           size="sm"
