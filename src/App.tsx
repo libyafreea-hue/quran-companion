@@ -8,10 +8,24 @@ import SurahReader from "./pages/SurahReader";
 import Adhkar from "./pages/Adhkar";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
+import PrayerTimesPage from "./pages/PrayerTimes";
+import { useEffect } from "react";
+import { refreshPrayerNotifications } from "./lib/prayerNotifications";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshPrayerNotifications().catch(error => console.warn('Prayer reminders could not be refreshed', error));
+      }
+    };
+    refresh();
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, []);
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -21,12 +35,14 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/surah/:id" element={<SurahReader />} />
           <Route path="/adhkar" element={<Adhkar />} />
+          <Route path="/prayer-times" element={<PrayerTimesPage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
