@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
 import { Play, Pause, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import adhanAsset from '@/assets/adhan.ogg.asset.json';
@@ -9,8 +8,7 @@ export default function AdhanPlayer() {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const src = Capacitor.isNativePlatform()
-    ? new URL(adhanAsset.url, 'https://quran-art-chant.lovable.app').href : adhanAsset.url;
+  const src = new URL(adhanAsset.url, 'https://quran-art-chant.lovable.app').href;
   useEffect(() => {
     const element = audio.current;
     return () => { element?.pause(); };
