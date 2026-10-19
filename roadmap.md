@@ -1,4 +1,10 @@
 # Prayer times
+# Nearby mosques
+- [ ] Connect Google Maps and secure mosque searches.
+- [ ] Add location-based mosque map, nearby list and directions.
+- [ ] Update privacy disclosure and verify supported flows.
+
+# Prayer times
 - [x] Add optional Adhan audio at prayer time and on-demand listening.
 - [x] Test optional audio scheduling and playback.
 - [x] Add location-based five prayers and sunrise.
