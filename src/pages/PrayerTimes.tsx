@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { dailyEntries, locationDate, locationFromCoordinates, METHODS, PRAYERS, readPrayerSettings, savePrayerSettings, type Method, type PrayerSettings } from '@/lib/prayerTimes';
 import { schedulePrayerNotifications } from '@/lib/prayerNotifications';
 import islamicHeader from '@/assets/islamic-header.jpg';
+import AdhanPlayer from '@/components/AdhanPlayer';
 
 const icons = [Moon, Sunrise, Sun, Sun, Sunset, Moon];
 const PrayerTimesPage = () => {
@@ -40,7 +41,7 @@ const PrayerTimesPage = () => {
       await schedulePrayerNotifications(updated);
       savePrayerSettings(updated);
       setSettings(updated);
-      if (updated.enabled) setStatus('تمت جدولة التنبيهات لـ٣٠ يوماً، وتتجدد عند فتح التطبيق. قد يؤخرها توفير البطارية.');
+      if (updated.enabled || updated.adhanEnabled) setStatus('تمت جدولة التنبيهات لـ٣٠ يوماً، وتتجدد عند فتح التطبيق. قد يؤخرها توفير البطارية.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'تعذر حفظ التنبيهات، حاول مرة أخرى.');
     } finally { setSaving(false); }
@@ -65,7 +66,7 @@ const PrayerTimesPage = () => {
     } finally { setLocating(false); }
   };
 
-  const toggleReminders = async (enabled: boolean) => {
+  const toggleReminders = async (enabled: boolean, field: 'enabled' | 'adhanEnabled' = 'enabled') => {
     if (enabled) {
       setError('');
       try {
@@ -73,7 +74,7 @@ const PrayerTimesPage = () => {
         if (permission.display !== 'granted') { setError('يرجى السماح بالإشعارات من إعدادات الهاتف.'); return; }
       } catch { setError('تعذر طلب الإشعارات. تحقق من إعدادات الهاتف.'); return; }
     }
-    await updateSettings({ ...settings, enabled });
+    await updateSettings({ ...settings, [field]: enabled });
   };
   const formatTime = (time?: Date) => time && Number.isFinite(time.getTime())
     ? new Intl.DateTimeFormat('ar-LY', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: true }).format(time)
@@ -143,13 +144,16 @@ const PrayerTimesPage = () => {
         </section>
 
         <section className="border-t border-border mt-6 pt-6 space-y-5" aria-label="تنبيهات قبل الأذان">
-          <div className="flex items-center justify-between gap-4"><h2 className="flex items-center gap-2 text-xl font-amiri font-bold"><Bell className="h-5 w-5 text-primary" />تنبيه قبل الأذان</h2><Switch aria-label="تفعيل تنبيهات الأذان" dir="ltr" checked={settings.enabled} disabled={!native || !settings.location || saving || locating} onCheckedChange={toggleReminders} /></div>
+          <div className="flex items-center justify-between gap-4"><h2 className="flex items-center gap-2 text-xl font-amiri font-bold"><Bell className="h-5 w-5 text-primary" />تنبيه قبل الأذان</h2><Switch aria-label="تفعيل تنبيهات الأذان" dir="ltr" checked={settings.enabled} disabled={!native || !settings.location || saving || locating} onCheckedChange={enabled => toggleReminders(enabled)} /></div>
           {!native && <p className="text-sm text-muted-foreground">تنبيهات الأذان متاحة في تطبيق أندرويد، وليست في نسخة المتصفح.</p>}
           <div className="space-y-2 max-w-xs"><label htmlFor="reminder-lead" className="text-sm">وقت التنبيه</label>
             <Select value={String(settings.minutesBefore)} onValueChange={v => updateSettings({ ...settings, minutesBefore: Number(v) })} disabled={saving || locating} dir="rtl"><SelectTrigger id="reminder-lead"><SelectValue /></SelectTrigger><SelectContent>{[5, 10, 15, 20, 30].map(n => <SelectItem key={n} value={String(n)}>قبل الأذان بـ{n} دقائق</SelectItem>)}</SelectContent></Select>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-4">{PRAYERS.map(p => <label key={p.key} className="flex items-center gap-2"><Checkbox checked={settings.prayers.includes(p.key)} disabled={saving || locating} aria-label={`تنبيه ${p.name}`} onCheckedChange={checked => updateSettings({ ...settings, prayers: checked ? [...settings.prayers, p.key] : settings.prayers.filter(key => key !== p.key) })} />{p.name}</label>)}</div>
-          {settings.enabled && settings.prayers.length === 0 && <p className="text-sm text-muted-foreground">لم تُحدَّد أي صلاة للتنبيه.</p>}
+          <div className="flex items-center justify-between gap-4"><label htmlFor="adhan-sound" className="text-lg font-amiri">صوت الأذان عند دخول وقت الصلاة</label><Switch id="adhan-sound" dir="ltr" checked={settings.adhanEnabled} disabled={!native || !settings.location || saving || locating} onCheckedChange={enabled => toggleReminders(enabled, 'adhanEnabled')} /></div>
+          <p className="text-sm text-muted-foreground">صوت تنبيه الأذان مقطع قصير عند وقت الصلاة، منفصل عن التذكير السابق لها. يخضع لإعدادات الصوت وعدم الإزعاج في الهاتف.</p>
+          <AdhanPlayer />
+          {(settings.enabled || settings.adhanEnabled) && settings.prayers.length === 0 && <p className="text-sm text-muted-foreground">لم تُحدَّد أي صلاة للتنبيه.</p>}
           {status && <p role="status" className="text-sm text-primary">{status}</p>}
         </section>
       </main>

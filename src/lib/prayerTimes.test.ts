@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PRAYER_SETTINGS, dailyEntries, locationFromCoordinates, reminderPlan, type PrayerSettings } from './prayerTimes';
+import { adhanPlan, DEFAULT_PRAYER_SETTINGS, dailyEntries, locationFromCoordinates, reminderPlan, type PrayerSettings } from './prayerTimes';
 
 const settings: PrayerSettings = {
   ...DEFAULT_PRAYER_SETTINGS, location: locationFromCoordinates(32.8872, 13.1913), enabled: true,
 };
 describe('location-based prayer times', () => {
+  it('plays optional Adhan alerts at prayer time independently of advance reminders', () => {
+    const now = new Date('2026-10-17T00:00:00Z');
+    expect(adhanPlan(settings, now, 1)).toEqual([]);
+    const calls = adhanPlan({ ...settings, enabled: false, adhanEnabled: true }, now, 1);
+    const prayers = dailyEntries(settings, now).filter(p => p.key !== 'sunrise');
+    expect(calls).toHaveLength(5);
+    calls.forEach((call, i) => expect(call.at.getTime()).toBe(prayers[i].time.getTime()));
+  });
   it('calculates all five prayers and sunrise for the geographic location', () => {
     const entries = dailyEntries(settings, new Date('2026-10-17T00:00:00Z'));
     expect(entries.map(p => p.key)).toEqual(['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']);

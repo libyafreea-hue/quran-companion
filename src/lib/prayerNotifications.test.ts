@@ -9,6 +9,13 @@ vi.mock('@capacitor/local-notifications', () => ({ LocalNotifications: mocks }))
 import { schedulePrayerNotifications } from './prayerNotifications';
 
 describe('prayer notifications', () => {
+  it('uses the Adhan resource only when opted in, with a separate channel', async () => {
+    await schedulePrayerNotifications({ ...DEFAULT_PRAYER_SETTINGS, enabled: false, adhanEnabled: true, location: locationFromCoordinates(32.8872, 13.1913) });
+    expect(mocks.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'prayer-adhan-audio-v1', sound: 'adhan_notification.mp3' }));
+    const notifications = mocks.schedule.mock.calls[0][0].notifications;
+    expect(notifications.length).toBeGreaterThan(140);
+    expect(notifications.every((n: { channelId: string; sound: string }) => n.channelId === 'prayer-adhan-audio-v1' && n.sound === 'adhan_notification.mp3')).toBe(true);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getPending.mockResolvedValue({ notifications: [{ id: 1001 }, { id: 20000 }] });
