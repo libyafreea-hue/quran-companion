@@ -26,12 +26,13 @@ export interface PrayerSettings {
   method: Method;
   hanafi: boolean;
   enabled: boolean;
+  adhanEnabled: boolean;
   minutesBefore: number;
   prayers: PrayerKey[];
 }
 export const DEFAULT_PRAYER_SETTINGS: PrayerSettings = {
   location: null, method: 'MuslimWorldLeague', hanafi: false,
-  enabled: false, minutesBefore: 10, prayers: PRAYERS.map(p => p.key),
+  enabled: false, adhanEnabled: false, minutesBefore: 10, prayers: PRAYERS.map(p => p.key),
 };
 const STORAGE_KEY = 'prayer_settings';
 export function readPrayerSettings(): PrayerSettings {
@@ -45,6 +46,7 @@ export function readPrayerSettings(): PrayerSettings {
       location: validLocation ? { latitude: location.latitude, longitude: location.longitude, timezone: tzLookup(location.latitude, location.longitude) } : null,
       method: raw.method in METHODS ? raw.method : 'MuslimWorldLeague',
       hanafi: raw.hanafi === true, enabled: raw.enabled === true,
+      adhanEnabled: raw.adhanEnabled === true,
       minutesBefore: [5, 10, 15, 20, 30].includes(raw.minutesBefore) ? raw.minutesBefore : 10,
       prayers: Array.isArray(raw.prayers) ? PRAYERS.filter(p => raw.prayers.includes(p.key)).map(p => p.key) : PRAYERS.map(p => p.key),
     };
@@ -88,6 +90,22 @@ export function reminderPlan(settings: PrayerSettings, now = new Date(), days = 
       const at = new Date(times[prayer.key].getTime() - settings.minutesBefore * 60_000);
       if (settings.prayers.includes(prayer.key) && Number.isFinite(at.getTime()) && at > now) {
         result.push({ id: 20000 + day * 5 + index, title: `اقترب أذان ${prayer.name}`, body: `بقي ${settings.minutesBefore} دقائق على أذان ${prayer.name}.`, at });
+      }
+    });
+  }
+  return result;
+}
+
+export function adhanPlan(settings: PrayerSettings, now = new Date(), days = 30) {
+  if (!settings.adhanEnabled || !settings.location) return [];
+  const result: { id: number; title: string; body: string; at: Date }[] = [];
+  for (let day = 0; day < days; day++) {
+    const times = calculatePrayerTimes(settings, locationDate(now, settings.location.timezone, day));
+    if (!times) continue;
+    PRAYERS.forEach((prayer, index) => {
+      const at = times[prayer.key];
+      if (settings.prayers.includes(prayer.key) && Number.isFinite(at.getTime()) && at > now) {
+        result.push({ id: 20150 + day * 5 + index, title: `أذان ${prayer.name}`, body: `حان وقت صلاة ${prayer.name}.`, at });
       }
     });
   }

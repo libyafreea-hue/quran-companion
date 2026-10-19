@@ -1,4 +1,6 @@
 # Prayer times
+- [x] Add optional Adhan audio at prayer time and on-demand listening.
+- [x] Test optional audio scheduling and playback.
 - [x] Add location-based five prayers and sunrise.
 - [x] Add configurable advance notifications on Android.
 - [x] Update location permissions and privacy disclosure.
