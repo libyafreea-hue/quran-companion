@@ -15,6 +15,7 @@
         "@capacitor/splash-screen": "^8.0.1",
         "@capawesome-team/capacitor-android-foreground-service": "^8.0.1",
         "@hookform/resolvers": "^3.10.0",
+        "@lovable.dev/cloud-auth-js": "^1.1.2",
         "@mediagrid/capacitor-native-audio": "^3.0.0",
         "@radix-ui/react-accordion": "^1.2.11",
         "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -251,6 +252,8 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.25", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ=="],
+
+    "@lovable.dev/cloud-auth-js": ["@lovable.dev/cloud-auth-js@1.2.1", "", {}, "sha512-BetMp9TvV/QgZ54KBr0yhPNqcB2Z6VqrF3H54sNgsKpKeSQO0CFDtPNtSmtKW9cCsHAp7yXCl04X82Zfdjo0CA=="],
 
     "@mediagrid/capacitor-native-audio": ["@mediagrid/capacitor-native-audio@3.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@mediagrid/capacitor-native-audio/-/capacitor-native-audio-3.0.0.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-u3LvuqJn2VLND8KXdkxoD8YobcNylF40d6fA5KirNY5/79rwviY28AksbVZSo41YjkhJSNVnKilPBe6nzpP8kA=="],
 
