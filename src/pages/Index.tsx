@@ -4,7 +4,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import islamicHeader from "@/assets/islamic-header.jpg";
 import islamicBg from "@/assets/islamic-bg-pattern.jpg";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Bell } from "lucide-react";
+import { BookOpen, Bell, Compass, CircleDot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showInterstitial } from "@/lib/ads";
 
@@ -51,6 +51,10 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <nav aria-label="السبحة والقبلة" className="mb-6 flex justify-center gap-3" dir="rtl">
+          <Button variant="outline" className="gap-2" onClick={() => navigate('/tasbih')}><CircleDot className="h-5 w-5" />السبحة الإلكترونية</Button>
+          <Button variant="outline" className="gap-2" onClick={() => navigate('/qibla')}><Compass className="h-5 w-5" />اتجاه القبلة</Button>
+        </nav>
         <div className="flex flex-col md:flex-row gap-6" dir="rtl">
           {/* Right Side - Al-Fatiha */}
           <div className="flex-1 order-1">
