@@ -1,8 +1,9 @@
-# Prayer times
-# Nearby mosques
-- [ ] Connect Google Maps and secure mosque searches.
-- [ ] Add location-based mosque map, nearby list and directions.
-- [ ] Update privacy disclosure and verify supported flows.
+# Tasbih and Qibla
+- [x] Cancel the unfinished nearby-mosques section.
+- [x] Add electronic tasbih with saved count and reset.
+- [x] Add local Qibla calculation and device compass.
+- [x] Update privacy disclosure and verify both sections.
+- [ ] Verify native compass accuracy on a physical Android phone — requires user's rebuilt APK and device.
 
 # Prayer times
 - [x] Add optional Adhan audio at prayer time and on-demand listening.

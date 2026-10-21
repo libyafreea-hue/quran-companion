@@ -9,6 +9,8 @@ import Adhkar from "./pages/Adhkar";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import PrayerTimesPage from "./pages/PrayerTimes";
+import Tasbih from "./pages/Tasbih";
+import QiblaPage from "./pages/Qibla";
 import { useEffect } from "react";
 import { refreshPrayerNotifications } from "./lib/prayerNotifications";
 
@@ -36,6 +38,8 @@ const App = () => {
           <Route path="/surah/:id" element={<SurahReader />} />
           <Route path="/adhkar" element={<Adhkar />} />
           <Route path="/prayer-times" element={<PrayerTimesPage />} />
+          <Route path="/tasbih" element={<Tasbih />} />
+          <Route path="/qibla" element={<QiblaPage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
