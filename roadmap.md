@@ -1,8 +1,9 @@
 # Tasbih and Qibla
 - [x] Cancel the unfinished nearby-mosques section.
-- [ ] Add electronic tasbih with saved count and reset.
-- [ ] Add local Qibla calculation and device compass.
-- [ ] Update privacy disclosure and verify both sections.
+- [x] Add electronic tasbih with saved count and reset.
+- [x] Add local Qibla calculation and device compass.
+- [x] Update privacy disclosure and verify both sections.
+- [ ] Verify native compass accuracy on a physical Android phone — requires user's rebuilt APK and device.
 
 # Prayer times
 - [x] Add optional Adhan audio at prayer time and on-demand listening.

@@ -63,8 +63,10 @@ export default function QiblaPage() {
     if (!location) return;
     stopCompass(); setHeading(null); setAccuracy(0); setStarting(true); setCompassStatus('');
     const current = generation.current;
+    let received = false;
     const receive = (value: number, quality: number) => {
       if (generation.current !== current || !Number.isFinite(value)) return;
+      received = true;
       if (pendingTimer.current) clearTimeout(pendingTimer.current);
       setHeading(value); setAccuracy(quality); setStarting(false);
     };
@@ -97,7 +99,7 @@ export default function QiblaPage() {
           window.removeEventListener('deviceorientation', listener);
         };
       }
-      if (generation.current !== current) return;
+      if (generation.current !== current || received) return;
       pendingTimer.current = setTimeout(() => {
         if (generation.current !== current) return;
         stopCompass(); setStarting(false); setHeading(null);
