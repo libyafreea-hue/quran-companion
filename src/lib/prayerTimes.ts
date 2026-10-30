@@ -1,5 +1,7 @@
 import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan';
 import tzLookup from 'tz-lookup';
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 export const PRAYERS = [
   { key: 'fajr', name: 'الفجر' },
@@ -35,9 +37,10 @@ export const DEFAULT_PRAYER_SETTINGS: PrayerSettings = {
   enabled: false, adhanEnabled: false, minutesBefore: 10, prayers: PRAYERS.map(p => p.key),
 };
 const STORAGE_KEY = 'prayer_settings';
-export function readPrayerSettings(): PrayerSettings {
+let nativeSettings: PrayerSettings | undefined;
+function parsePrayerSettings(value: string | null): PrayerSettings {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    const raw = JSON.parse(value || 'null');
     if (!raw) return { ...DEFAULT_PRAYER_SETTINGS };
     const location = raw.location;
     const validLocation = location && Number.isFinite(location.latitude) && Math.abs(location.latitude) <= 90 &&
@@ -52,8 +55,36 @@ export function readPrayerSettings(): PrayerSettings {
     };
   } catch { return { ...DEFAULT_PRAYER_SETTINGS }; }
 }
-export function savePrayerSettings(settings: PrayerSettings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+export function readPrayerSettings(): PrayerSettings {
+  if (Capacitor.isNativePlatform() && nativeSettings) return nativeSettings;
+  try { return parsePrayerSettings(localStorage.getItem(STORAGE_KEY)); }
+  catch { return { ...DEFAULT_PRAYER_SETTINGS }; }
+}
+// Hydrate before rendering routes or refreshing reminders; migrate existing installs once.
+export async function loadPrayerSettings(): Promise<PrayerSettings> {
+  if (!Capacitor.isNativePlatform()) return readPrayerSettings();
+  if (nativeSettings) return nativeSettings;
+  const { value } = await Preferences.get({ key: STORAGE_KEY });
+  let legacy: string | null = null;
+  if (value === null) {
+    try { legacy = localStorage.getItem(STORAGE_KEY); } catch { /* Native storage remains available. */ }
+  }
+  const settings = parsePrayerSettings(value ?? legacy);
+  if (value === null && legacy !== null) {
+    await Preferences.set({ key: STORAGE_KEY, value: JSON.stringify(settings) });
+  }
+  nativeSettings = settings;
+  return settings;
+}
+export async function savePrayerSettings(settings: PrayerSettings): Promise<void> {
+  const value = JSON.stringify(settings);
+  if (Capacitor.isNativePlatform()) {
+    await Preferences.set({ key: STORAGE_KEY, value });
+    nativeSettings = settings;
+    try { localStorage.setItem(STORAGE_KEY, value); } catch { /* Optional WebView mirror. */ }
+  } else {
+    localStorage.setItem(STORAGE_KEY, value);
+  }
 }
 export function locationFromCoordinates(latitude: number, longitude: number) {
   return { latitude, longitude, timezone: tzLookup(latitude, longitude) };
