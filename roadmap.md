@@ -6,6 +6,8 @@
 - [ ] Verify native compass accuracy on a physical Android phone — requires user's rebuilt APK and device.
 
 # Prayer times
+- [ ] Replace the short notification excerpt with full native Adhan playback and manual stop.
+- [ ] Verify scheduling, opt-out, permissions and full recording duration.
 - [x] Preserve location, Adhan sound and advance reminders after reopening, including scheduling failures.
 - [x] Verify saved settings restoration and migration from older installations (15 tests passed; browser location/settings reload verified).
 - [x] Add optional Adhan audio at prayer time and on-demand listening.
