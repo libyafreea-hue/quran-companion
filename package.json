@@ -20,6 +20,7 @@
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/geolocation": "^8",
     "@capacitor/local-notifications": "^8.0.2",
+    "@capacitor/preferences": "^8",
     "@capacitor/splash-screen": "^8.0.1",
     "@capawesome-team/capacitor-android-foreground-service": "^8.0.1",
     "@hookform/resolvers": "^3.10.0",
