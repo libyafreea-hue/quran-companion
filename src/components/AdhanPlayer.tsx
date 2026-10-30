@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Play, Pause, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import adhanAsset from '@/assets/adhan.ogg.asset.json';
+import { Capacitor } from '@capacitor/core';
+import { AdhanAlarm } from '@/lib/adhanAlarm';
 
 export default function AdhanPlayer() {
   const audio = useRef<HTMLAudioElement>(null);
@@ -21,6 +23,7 @@ export default function AdhanPlayer() {
     try { await element.play(); } catch { setError(true); } finally { setLoading(false); }
   };
   const stop = () => {
+    if (Capacitor.getPlatform() === 'android') void AdhanAlarm.stop().catch(() => setError(true));
     const element = audio.current;
     if (!element) return;
     element.pause(); element.currentTime = 0; setLoading(false);
@@ -35,7 +38,7 @@ export default function AdhanPlayer() {
         <Button variant="ghost" size="icon" aria-label="إيقاف الأذان" title="إيقاف الأذان" onClick={stop}><Square className="h-4 w-4" /></Button>
       </div>
     </div>
-    <audio ref={audio} src={src} preload="none" onPlaying={() => { setPlaying(true); setLoading(false); }} onPause={() => setPlaying(false)} onEnded={() => { setPlaying(false); stop(); }} onError={() => { setLoading(false); setPlaying(false); setError(true); }} />
+    <audio ref={audio} src={src} preload="none" onPlaying={() => { setPlaying(true); setLoading(false); }} onPause={() => setPlaying(false)} onEnded={() => { setPlaying(false); if (audio.current) audio.current.currentTime = 0; }} onError={() => { setLoading(false); setPlaying(false); setError(true); }} />
     {error && <p role="alert" className="text-sm text-destructive">تعذر تشغيل الأذان. تحقق من اتصال الإنترنت ثم حاول مجدداً.</p>}
   </div>;
 }
