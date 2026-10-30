@@ -76,6 +76,13 @@ const PrayerTimesPage = () => {
     }
     await updateSettings({ ...settings, [field]: enabled });
   };
+  const allowExactAlarms = async () => {
+    setError('');
+    try {
+      await LocalNotifications.changeExactNotificationSetting();
+      await schedulePrayerNotifications(settings);
+    } catch (err) { setError(err instanceof Error ? err.message : 'تعذر السماح بالتنبيهات الدقيقة.'); }
+  };
   const formatTime = (time?: Date) => time && Number.isFinite(time.getTime())
     ? new Intl.DateTimeFormat('ar-LY', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: true }).format(time)
     : '—';
@@ -151,7 +158,8 @@ const PrayerTimesPage = () => {
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-4">{PRAYERS.map(p => <label key={p.key} className="flex items-center gap-2"><Checkbox checked={settings.prayers.includes(p.key)} disabled={saving || locating} aria-label={`تنبيه ${p.name}`} onCheckedChange={checked => updateSettings({ ...settings, prayers: checked ? [...settings.prayers, p.key] : settings.prayers.filter(key => key !== p.key) })} />{p.name}</label>)}</div>
           <div className="flex items-center justify-between gap-4"><label htmlFor="adhan-sound" className="text-lg font-amiri">صوت الأذان عند دخول وقت الصلاة</label><Switch id="adhan-sound" dir="ltr" checked={settings.adhanEnabled} disabled={!native || !settings.location || saving || locating} onCheckedChange={enabled => toggleReminders(enabled, 'adhanEnabled')} /></div>
-          <p className="text-sm text-muted-foreground">صوت تنبيه الأذان مقطع قصير عند وقت الصلاة، منفصل عن التذكير السابق لها. يخضع لإعدادات الصوت وعدم الإزعاج في الهاتف.</p>
+          <p className="text-sm text-muted-foreground">الأذان الكامل عند وقت الصلاة، مع إمكانية إيقافه من إشعار الهاتف. يخضع لمستوى صوت الوسائط والوضع الصامت وعدم الإزعاج.</p>
+          {native && settings.adhanEnabled && error.includes('التنبيهات الدقيقة') && <Button variant="outline" onClick={allowExactAlarms}>السماح بالتنبيهات الدقيقة</Button>}
           <AdhanPlayer />
           {(settings.enabled || settings.adhanEnabled) && settings.prayers.length === 0 && <p className="text-sm text-muted-foreground">لم تُحدَّد أي صلاة للتنبيه.</p>}
           {status && <p role="status" className="text-sm text-primary">{status}</p>}

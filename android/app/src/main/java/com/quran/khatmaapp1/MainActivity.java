@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
         // The web side handles insets via env(safe-area-inset-*).
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         registerPlugin(CompassPlugin.class);
+        registerPlugin(AdhanAlarmPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
