@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { adhanPlan, readPrayerSettings, reminderPlan, type PrayerSettings } from './prayerTimes';
+import { adhanPlan, loadPrayerSettings, reminderPlan, type PrayerSettings } from './prayerTimes';
 
 // Serialize refreshes so navigating or resuming cannot cancel a newer schedule.
 let queue: Promise<void> = Promise.resolve();
@@ -30,8 +30,8 @@ export function schedulePrayerNotifications(settings: PrayerSettings): Promise<v
   queue = next.catch(() => undefined);
   return next;
 }
-export function refreshPrayerNotifications() {
-  const settings = readPrayerSettings();
+export async function refreshPrayerNotifications() {
+  const settings = await loadPrayerSettings();
   if (settings.enabled || settings.adhanEnabled) return schedulePrayerNotifications(settings);
   return Promise.resolve();
 }

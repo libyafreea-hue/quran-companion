@@ -38,9 +38,9 @@ const PrayerTimesPage = () => {
   const updateSettings = async (updated: PrayerSettings) => {
     setSaving(true); setError(''); setStatus('');
     try {
-      await schedulePrayerNotifications(updated);
-      savePrayerSettings(updated);
+      await savePrayerSettings(updated);
       setSettings(updated);
+      await schedulePrayerNotifications(updated);
       if (updated.enabled || updated.adhanEnabled) setStatus('تمت جدولة التنبيهات لـ٣٠ يوماً، وتتجدد عند فتح التطبيق. قد يؤخرها توفير البطارية.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'تعذر حفظ التنبيهات، حاول مرة أخرى.');
@@ -58,7 +58,7 @@ const PrayerTimesPage = () => {
       const location = locationFromCoordinates(position.coords.latitude, position.coords.longitude);
       const updated = { ...settings, location };
       // Keep a successfully detected location even when notification scheduling fails.
-      savePrayerSettings(updated); setSettings(updated); setDay(0); setNow(new Date());
+      await savePrayerSettings(updated); setSettings(updated); setDay(0); setNow(new Date());
       await schedulePrayerNotifications(updated);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
