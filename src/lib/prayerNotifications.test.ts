@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_PRAYER_SETTINGS, locationFromCoordinates } from './prayerTimes';
 import { adhanPlan } from './prayerTimes';
 
@@ -12,6 +12,7 @@ vi.mock('./adhanAlarm', () => ({ AdhanAlarm: { schedule: mocks.nativeSchedule } 
 import { schedulePrayerNotifications } from './prayerNotifications';
 
 describe('prayer notifications', () => {
+  afterEach(() => vi.useRealTimers());
   it('schedules opted-in full native playback at prayer times instead of short notification sounds', async () => {
     const settings = { ...DEFAULT_PRAYER_SETTINGS, enabled: false, adhanEnabled: true, location: locationFromCoordinates(32.8872, 13.1913) };
     await schedulePrayerNotifications(settings);
@@ -54,6 +55,7 @@ describe('prayer notifications', () => {
     mocks.nativeSchedule.mockRejectedValue(new Error('يرجى السماح بالتنبيهات الدقيقة'));
     await expect(schedulePrayerNotifications({ ...DEFAULT_PRAYER_SETTINGS, enabled: true, adhanEnabled: true,
       location: locationFromCoordinates(32.8872, 13.1913) })).rejects.toThrow('التنبيهات الدقيقة');
-    expect(mocks.schedule.mock.calls[0][0].notifications).toHaveLength(150);
+    // At this fixed instant today's Fajr reminder has already passed.
+    expect(mocks.schedule.mock.calls[0][0].notifications).toHaveLength(149);
   });
 });

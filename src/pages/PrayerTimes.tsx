@@ -62,7 +62,7 @@ const PrayerTimesPage = () => {
       await schedulePrayerNotifications(updated);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
-      setError(message.includes('لم يُسمح') || message.includes('الإشعارات') ? message : 'تعذر تحديد الموقع. فعّل خدمة الموقع واسمح للتطبيق بالوصول إليه ثم أعد المحاولة.');
+      setError(message.includes('لم يُسمح') || message.includes('الإشعارات') || message.includes('التنبيهات الدقيقة') ? message : 'تعذر تحديد الموقع. فعّل خدمة الموقع واسمح للتطبيق بالوصول إليه ثم أعد المحاولة.');
     } finally { setLocating(false); }
   };
 
