@@ -12,14 +12,20 @@ export function schedulePrayerNotifications(settings: PrayerSettings): Promise<v
     const prayerNotifications = pending.notifications.filter(n => n.id >= 20000 && n.id < 20300);
     if (prayerNotifications.length) await LocalNotifications.cancel({ notifications: prayerNotifications });
     const android = Capacitor.getPlatform() === 'android';
-    // Remove the old native plan even if permissions have been revoked.
-    if (android) await AdhanAlarm.schedule({ alarms: [] });
+    // Opt-out cancels playback; ordinary refresh must not interrupt a playing Adhan.
+    if (android && (!settings.adhanEnabled || !settings.location)) await AdhanAlarm.schedule({ alarms: [] });
     if (!settings.enabled && !settings.adhanEnabled) return;
     const permission = await LocalNotifications.checkPermissions();
-    if (permission.display !== 'granted') throw new Error('يرجى السماح بالإشعارات من إعدادات الهاتف.');
+    if (permission.display !== 'granted') {
+      if (android) await AdhanAlarm.schedule({ alarms: [] });
+      throw new Error('يرجى السماح بالإشعارات من إعدادات الهاتف.');
+    }
     const plan = reminderPlan(settings);
     const calls = adhanPlan(settings);
-    if (!plan.length && !calls.length) return;
+    if (!plan.length && !calls.length) {
+      if (android) await AdhanAlarm.schedule({ alarms: [] });
+      return;
+    }
     await LocalNotifications.createChannel({ id: 'prayer-reminders', name: 'تنبيهات الصلاة', importance: 4, sound: 'default' });
     if (!android && calls.length) await LocalNotifications.createChannel({ id: 'prayer-adhan-audio-v1', name: 'صوت الأذان عند الصلاة', importance: 4, sound: 'adhan_notification.mp3' });
     const notifications = [...plan.map(n => ({
@@ -30,7 +36,7 @@ export function schedulePrayerNotifications(settings: PrayerSettings): Promise<v
       schedule: { at: n.at, allowWhileIdle: true }, extra: { section: 'prayer-times' },
     }))];
     if (notifications.length) await LocalNotifications.schedule({ notifications });
-    if (android && calls.length) await AdhanAlarm.schedule({
+    if (android && settings.adhanEnabled) await AdhanAlarm.schedule({
       alarms: calls.map(n => ({ id: n.id, at: n.at.getTime(), title: n.title })),
     });
   };

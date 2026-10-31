@@ -23,15 +23,20 @@ public class AdhanPlaybackService extends Service {
     private MediaPlayer player;
     private AudioManager audioManager;
     private AudioFocusRequest focus;
+    private final AudioManager.OnAudioFocusChangeListener focusListener = change -> {
+        if (change < 0) stopSelf();
+    };
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null || STOP.equals(intent.getAction())) { stopSelf(); return START_NOT_STICKY; }
         NotificationManager notifications = getSystemService(NotificationManager.class);
-        NotificationChannel channel = new NotificationChannel(CHANNEL, "الأذان الكامل", NotificationManager.IMPORTANCE_LOW);
-        channel.setSound(null, null);
-        notifications.createNotificationChannel(channel);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL, "الأذان الكامل", NotificationManager.IMPORTANCE_LOW);
+            channel.setSound(null, null);
+            notifications.createNotificationChannel(channel);
+        }
         PendingIntent stop = PendingIntent.getService(this, 31001,
                 new Intent(this, AdhanPlaybackService.class).setAction(STOP),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -55,11 +60,16 @@ public class AdhanPlaybackService extends Service {
             }
             AudioAttributes attributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
-            focus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-                    .setAudioAttributes(attributes).setOnAudioFocusChangeListener(change -> {
-                        if (change < 0) stopSelf();
-                    }).build();
-            if (audioManager.requestAudioFocus(focus) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            int focusResult;
+            if (Build.VERSION.SDK_INT >= 26) {
+                focus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setAudioAttributes(attributes).setOnAudioFocusChangeListener(focusListener).build();
+                focusResult = audioManager.requestAudioFocus(focus);
+            } else {
+                focusResult = audioManager.requestAudioFocus(focusListener, AudioManager.STREAM_MUSIC,
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+            }
+            if (focusResult != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 stopSelf(); return START_NOT_STICKY;
             }
             player = MediaPlayer.create(this, R.raw.adhan_full, attributes, 0);
@@ -75,7 +85,11 @@ public class AdhanPlaybackService extends Service {
 
     private void releasePlayer() {
         if (player != null) { player.release(); player = null; }
-        if (audioManager != null && focus != null) { audioManager.abandonAudioFocusRequest(focus); focus = null; }
+        if (audioManager != null) {
+            if (Build.VERSION.SDK_INT >= 26 && focus != null) {
+                audioManager.abandonAudioFocusRequest(focus); focus = null;
+            } else if (Build.VERSION.SDK_INT < 26) audioManager.abandonAudioFocus(focusListener);
+        }
     }
     @Override public void onDestroy() { releasePlayer(); stopForeground(true); super.onDestroy(); }
 }
